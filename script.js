@@ -21,7 +21,7 @@ window.switchTab = switchTab;
 // ---------------------------------------------------------------
 const registrationForm = document.getElementById("registrationForm");
 const registerBtn = document.getElementById("registerBtn");
-const regResult = document.getElementById("qrResult"); // reused container, no QR anymore
+const regResult = document.getElementById("qrResult");
 
 registerBtn.addEventListener("click", async () => {
   const fullName = document.getElementById("fullName").value.trim();
@@ -66,15 +66,18 @@ registerBtn.addEventListener("click", async () => {
 function showRegConfirmation(fullName) {
   regResult.classList.remove("hidden");
   regResult.innerHTML = `
-    <div class="text-center mt-8 border-t pt-8">
-      <h3 class="text-xl font-bold mb-2">You're all set, ${escapeHtml(fullName)}!</h3>
-      <p class="text-gray-600">This device will remember you — head to Quick Check-in next time to sign in with one tap.</p>
+    <div class="panel-in text-center mt-8 pt-8 border-t border-ink/10">
+      <div class="flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-widest text-signal mb-3">
+        <span class="status-light on"></span> Registered
+      </div>
+      <h3 class="font-display text-xl font-bold text-ink mb-2">You're all set, ${escapeHtml(fullName)}!</h3>
+      <p class="text-ink/60 text-sm">This device will remember you — head to Quick Check-in next time to sign in with one tap.</p>
     </div>
   `;
 }
 
 // ---------------------------------------------------------------
-// Quick Check-in (localStorage based, no scanning)
+// Quick Check-in (localStorage based, geofenced)
 // ---------------------------------------------------------------
 const checkinDeviceBox = document.getElementById("checkinDeviceBox");
 const checkinMessage = document.getElementById("checkinMessage");
@@ -94,12 +97,14 @@ function renderCheckinBox() {
 
   if (!stored) {
     checkinDeviceBox.innerHTML = `
-      <div class="border-2 border-dashed border-gray-300 rounded-2xl py-8 px-4 sm:py-10 sm:px-6">
-        <i class="fas fa-user-slash text-4xl text-gray-300 mb-3"></i>
-        <p class="text-gray-600 mb-4">No profile found on this device.</p>
+      <div class="panel-in border-2 border-dashed border-rust/40 rounded-lg py-8 px-4 sm:py-10 sm:px-6 bg-rust/5">
+        <div class="flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-widest text-rust mb-3">
+          <span class="status-light error"></span> No Profile On Record
+        </div>
+        <p class="text-ink/60 mb-4 text-sm">This device hasn't been registered yet.</p>
         <button
           id="goRegisterBtn"
-          class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-2xl transition"
+          class="btn-press w-full sm:w-auto bg-brass hover:bg-brass-dark text-navy font-display font-semibold uppercase tracking-wide py-3 px-6 rounded-lg transition text-sm"
         >
           Register Now
         </button>
@@ -112,17 +117,20 @@ function renderCheckinBox() {
   }
 
   checkinDeviceBox.innerHTML = `
-    <div class="bg-green-500 text-white rounded-2xl sm:rounded-3xl py-8 px-4 sm:py-12 sm:px-8 mb-2">
-      <i class="fas fa-check-circle text-4xl sm:text-5xl mb-3"></i>
-      <p class="text-lg sm:text-xl font-bold mb-1">Welcome back, ${escapeHtml(stored.full_name)}</p>
+    <div class="panel-in bg-navy text-paper rounded-lg py-8 px-4 sm:py-10 sm:px-6 mb-3 relative overflow-hidden">
+      <div class="absolute top-0 left-0 right-0 h-1 bg-signal"></div>
+      <div class="flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-widest text-signal mb-3">
+        <span class="status-light on"></span> Ready
+      </div>
+      <p class="font-display text-lg sm:text-xl font-bold mb-4">Welcome back, ${escapeHtml(stored.full_name)}</p>
       <button
         id="checkInNowBtn"
-        class="w-full sm:w-auto mt-4 bg-white text-green-600 font-semibold py-3 px-8 rounded-2xl hover:bg-green-50 transition"
+        class="btn-press w-full sm:w-auto bg-brass hover:bg-brass-dark text-navy font-display font-semibold uppercase tracking-wide py-3 px-8 rounded-lg transition text-sm"
       >
         Check In Now
       </button>
     </div>
-    <button id="notYouBtn" class="text-sm text-gray-400 hover:text-gray-600 underline mt-2">
+    <button id="notYouBtn" class="text-xs font-mono text-ink/40 hover:text-ink/70 underline mt-1 transition-colors">
       Not you? Reset this device
     </button>
   `;
@@ -185,8 +193,6 @@ async function handleCheckIn() {
 
   if (error) {
     console.error(error);
-    // The database raises a specific "must be on company grounds" message —
-    // surface it directly since it's more useful than a generic failure.
     setCheckinMessage(error.message || "Failed to check in. Try again.", false);
     return;
   }
@@ -197,7 +203,7 @@ async function handleCheckIn() {
 
 function setCheckinMessage(text, success) {
   checkinMessage.textContent = text;
-  checkinMessage.className = `mt-4 font-medium ${success ? "text-green-600" : "text-red-600"}`;
+  checkinMessage.className = `panel-in mt-4 font-mono text-sm ${success ? "text-signal" : "text-rust"}`;
 }
 
 // ---------------------------------------------------------------
@@ -218,20 +224,23 @@ async function loadRecentActivity() {
   }
 
   if (!data || data.length === 0) {
-    list.innerHTML = `<p class="text-gray-400 text-sm">No check-ins yet.</p>`;
+    list.innerHTML = `<p class="text-ink/40 text-sm font-mono">No check-ins yet.</p>`;
     return;
   }
 
   list.innerHTML = data
-    .map((row) => {
+    .map((row, i) => {
       const time = new Date(row.scanned_at).toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
       });
       return `
-        <div class="bg-gray-50 p-4 rounded-2xl">
-          <p class="font-medium">${escapeHtml(row.full_name)}</p>
-          <p class="text-sm text-gray-500">Checked in at ${time} • ${escapeHtml(row.unit || "—")}</p>
+        <div class="item-in bg-white/70 border border-ink/10 p-4 rounded-lg flex items-center justify-between gap-3" style="animation-delay: ${i * 60}ms">
+          <div>
+            <p class="font-medium text-ink text-sm">${escapeHtml(row.full_name)}</p>
+            <p class="text-xs text-ink/50 font-mono">${escapeHtml(row.unit || "—")}</p>
+          </div>
+          <p class="text-xs font-mono text-ink/40 shrink-0">${time}</p>
         </div>
       `;
     })
@@ -245,5 +254,8 @@ function escapeHtml(str) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  switchTab(0);
+  // Returning devices (already registered) skip straight to Check-in —
+  // that's their one-tap action. Only new devices see Welcome/Register.
+  const alreadyRegistered = getStoredMember() !== null;
+  switchTab(alreadyRegistered ? 2 : 0);
 });
