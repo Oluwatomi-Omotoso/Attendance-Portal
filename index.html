@@ -4,49 +4,86 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase (QR/camera libraries removed — no longer needed) -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              navy: { DEFAULT: "#0b1420", panel: "#131f30" },
+              paper: "#f8f5ee",
+              brass: { DEFAULT: "#d89b3c", dark: "#b57f2c" },
+              signal: "#2f9e6e",
+              rust: "#c1522a",
+              ink: "#16202b",
+            },
+            fontFamily: {
+              display: ['"Space Grotesk"', "sans-serif"],
+              mono: ['"IBM Plex Mono"', "monospace"],
+            },
+          },
+        },
+      };
+    </script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
     />
 
-    <!-- Styles -->
+    <!-- Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
     <link rel="stylesheet" href="./styles.css" />
 
-    <title>NUPRC Interns/Corpers Attendance Portal</title>
+    <title>ICT Check-In Portal</title>
   </head>
 
-  <body>
-    <!-- Header -->
-    <header class="bg-white shadow-md sticky top-0 z-50">
+  <body class="min-h-screen">
+    <!-- Header: control-bar styling -->
+    <header
+      class="bg-navy text-paper sticky top-0 z-50 border-b-2 border-brass"
+    >
       <div
         class="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0"
       >
         <div class="flex items-center gap-2 sm:gap-3">
-          <div
-            class="w-8 h-8 sm:w-9 sm:h-9 bg-blue-600 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-bold text-xl sm:text-2xl shrink-0"
-          ></div>
-          <h1 class="text-lg sm:text-2xl font-bold text-gray-900">
-            Interns/Corpers Attendance Portal
-          </h1>
+          <div>
+            <h1
+              class="font-display text-base sm:text-xl font-bold leading-tight"
+            >
+              ICT Check-In Portal
+            </h1>
+            <div
+              class="hidden sm:flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-paper/50"
+            >
+              <span class="status-light on"></span> System Online
+            </div>
+          </div>
         </div>
+
         <nav
-          class="flex justify-between sm:justify-end gap-4 sm:gap-8 text-sm sm:text-lg"
+          class="flex gap-1 bg-navy-panel rounded-full p-1 text-xs sm:text-sm"
         >
-          <button onclick="switchTab(0)" class="tab-active pb-1" id="tab0">
+          <button
+            onclick="switchTab(0)"
+            class="tab-active px-3 sm:px-4 py-1.5 rounded-full transition font-medium"
+            id="tab0"
+          >
             Welcome
           </button>
           <button
             onclick="switchTab(1)"
-            class="pb-1 hover:text-blue-600"
+            class="px-3 sm:px-4 py-1.5 rounded-full transition font-medium text-paper/60 hover:text-paper"
             id="tab1"
           >
             Register
           </button>
           <button
             onclick="switchTab(2)"
-            class="pb-1 hover:text-blue-600"
+            class="px-3 sm:px-4 py-1.5 rounded-full transition font-medium text-paper/60 hover:text-paper"
             id="tab2"
           >
             Quick Check-in
@@ -55,49 +92,54 @@
       </div>
     </header>
 
+    <!-- Page contents -->
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
       <!-- Welcome Screen -->
       <div id="screen0" class="tab-screen">
-        <div class="text-center py-6 sm:py-20">
-          <div class="phone-frame bg-white mx-auto">
+        <div class="max-w-lg mx-auto">
+          <div class="panel-card p-6 sm:p-10">
             <div
-              class="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-6 sm:p-10 text-center"
+              class="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-brass-dark mb-4"
             >
-              <h2 class="text-2xl sm:text-4xl font-bold mb-4">
-                Let's get you signed up.
-              </h2>
+              <span class="status-light ready"></span> Daily Sign-In
             </div>
-            <div class="p-6 sm:p-10 text-center">
-              <div class="space-y-5 sm:space-y-6">
-                <i class="fas fa-users text-5xl sm:text-6xl text-blue-100"></i>
-                <p class="text-gray-600 text-base sm:text-lg">
-                  Fill in your details once, and simply check in from this
-                  device every other time.
-                </p>
-                <button
-                  onclick="switchTab(1)"
-                  class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-2xl text-lg transition"
-                >
-                  Get Started
-                </button>
-              </div>
-            </div>
+            <h2
+              class="font-display text-3xl sm:text-4xl font-bold text-ink mb-4 leading-tight"
+            >
+              Register once.<br />Check in every day.
+            </h2>
+            <p class="text-ink/70 text-base sm:text-lg mb-8">
+              Fill in your details once on this device. After that, checking in
+              takes one tap.
+            </p>
+            <button
+              onclick="switchTab(1)"
+              class="btn-press w-full bg-brass hover:bg-brass-dark text-navy font-display font-semibold uppercase tracking-wide py-4 rounded-lg text-base transition"
+            >
+              Get Started
+            </button>
           </div>
         </div>
       </div>
 
       <!-- Registration Form -->
       <div id="screen1" class="tab-screen hidden">
-        <div
-          class="max-w-md mx-auto bg-white rounded-2xl sm:rounded-3xl shadow-xl p-5 sm:p-8"
-        >
-          <h2 class="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8">
+        <div class="max-w-md mx-auto panel-card p-5 sm:p-8">
+          <div
+            class="font-mono text-xs uppercase tracking-widest text-brass-dark mb-2"
+          >
+            Staff Registration
+          </div>
+          <h2
+            class="font-display text-2xl sm:text-3xl font-bold text-ink mb-6 sm:mb-8"
+          >
             Create Your Profile
           </h2>
 
-          <form id="registrationForm" class="space-y-6">
+          <form id="registrationForm" class="space-y-5">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1"
+              <label
+                class="block font-mono text-xs uppercase tracking-wide text-ink/60 mb-1.5"
                 >Full Name</label
               >
               <input
@@ -105,31 +147,33 @@
                 id="fullName"
                 type="text"
                 required
-                class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-blue-500"
+                class="w-full px-4 py-3 border border-ink/15 bg-white/70 rounded-lg focus:outline-none focus:border-brass transition-colors"
                 placeholder="Mo. Salah"
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1"
+              <label
+                class="block font-mono text-xs uppercase tracking-wide text-ink/60 mb-1.5"
                 >Phone Number</label
               >
               <input
                 name="phone"
                 id="phone"
                 type="tel"
-                class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-blue-500"
+                class="w-full px-4 py-3 border border-ink/15 bg-white/70 rounded-lg focus:outline-none focus:border-brass transition-colors"
                 placeholder="+234 801 234 5678"
               />
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1"
+              <label
+                class="block font-mono text-xs uppercase tracking-wide text-ink/60 mb-1.5"
                 >Unit</label
               >
               <select
                 name="unit"
                 id="unit"
-                class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-blue-500"
+                class="w-full px-4 py-3 border border-ink/15 bg-white/70 rounded-lg focus:outline-none focus:border-brass transition-colors"
               >
                 <option>App development</option>
                 <option>Data-Management</option>
@@ -141,14 +185,15 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1"
+              <label
+                class="block font-mono text-xs uppercase tracking-wide text-ink/60 mb-1.5"
                 >Role / Position</label
               >
               <input
                 name="role"
                 id="role"
                 type="text"
-                class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-blue-500"
+                class="w-full px-4 py-3 border border-ink/15 bg-white/70 rounded-lg focus:outline-none focus:border-brass transition-colors"
                 placeholder="Corper"
               />
             </div>
@@ -156,35 +201,43 @@
             <button
               type="button"
               id="registerBtn"
-              class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-2xl text-lg transition mt-8"
+              class="btn-press w-full bg-brass hover:bg-brass-dark text-navy font-display font-semibold uppercase tracking-wide py-4 rounded-lg text-base transition mt-6"
             >
               Register
             </button>
           </form>
+
           <div id="qrResult" class="hidden"></div>
         </div>
       </div>
 
       <!-- Quick Check-in -->
       <div id="screen2" class="tab-screen hidden">
-        <div
-          class="max-w-md mx-auto bg-white rounded-2xl sm:rounded-3xl shadow-xl p-5 sm:p-8 text-center"
-        >
-          <h2 class="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8">
+        <div class="max-w-md mx-auto panel-card p-5 sm:p-8 text-center">
+          <div
+            class="font-mono text-xs uppercase tracking-widest text-brass-dark mb-2"
+          >
+            Attendance Log
+          </div>
+          <h2
+            class="font-display text-2xl sm:text-3xl font-bold text-ink mb-6 sm:mb-8"
+          >
             Quick Check-In
           </h2>
 
           <!-- Populated by renderCheckinBox() based on what's saved in localStorage -->
           <div id="checkinDeviceBox"></div>
 
-          <p id="checkinMessage" class="mt-4 font-medium"></p>
+          <p id="checkinMessage" class="mt-4 font-mono text-sm"></p>
 
-          <div class="mt-12">
-            <h3 class="text-left font-medium text-gray-600 mb-4">
+          <div class="mt-12 text-left">
+            <h3
+              class="font-mono text-xs uppercase tracking-widest text-ink/50 mb-4"
+            >
               Recent Activity
             </h3>
-            <div id="recentActivityList" class="space-y-3 text-left">
-              <p class="text-gray-400 text-sm">Loading...</p>
+            <div id="recentActivityList" class="space-y-3">
+              <p class="text-ink/40 text-sm font-mono">Loading...</p>
             </div>
           </div>
         </div>
