@@ -1,0 +1,22 @@
+.tab-active {
+  border-bottom: 3px solid #2563eb;
+  color: #2563eb;
+  font-weight: 600;
+}
+.phone-frame {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+  border: 12px solid #111;
+  border-radius: 48px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  box-sizing: border-box;
+}
+
+@media (max-width: 400px) {
+  .phone-frame {
+    border-width: 8px;
+    border-radius: 32px;
+  }
+}
