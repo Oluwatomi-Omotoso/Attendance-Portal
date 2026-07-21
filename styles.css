@@ -1,22 +1,172 @@
-.tab-active {
-  border-bottom: 3px solid #2563eb;
-  color: #2563eb;
-  font-weight: 600;
-}
-.phone-frame {
-  width: 100%;
-  max-width: 380px;
-  margin: 0 auto;
-  border: 12px solid #111;
-  border-radius: 48px;
-  overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-  box-sizing: border-box;
+:root {
+  --navy: #0b1420;
+  --navy-panel: #131f30;
+  --paper: #f8f5ee;
+  --page-bg: #eae6dc;
+  --brass: #d89b3c;
+  --brass-dark: #b57f2c;
+  --signal: #2f9e6e;
+  --rust: #c1522a;
+  --ink: #16202b;
 }
 
-@media (max-width: 400px) {
-  .phone-frame {
-    border-width: 8px;
-    border-radius: 32px;
+body {
+  background: var(--page-bg);
+  font-family: "IBM Plex Sans", sans-serif;
+  color: var(--ink);
+}
+
+/* Segmented tab control in the header. Specified as button.tab-active to
+   reliably win over the plain-utility text-color classes on inactive tabs,
+   regardless of stylesheet load order. */
+button.tab-active {
+  background: var(--brass);
+  color: var(--navy);
+}
+
+/* Status light: the one signature element reused everywhere the app
+   reports state (system status, registration success, check-in result). */
+.status-light {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.status-light.on {
+  background: var(--signal);
+  animation: pulse-signal 2s infinite;
+}
+.status-light.ready {
+  background: var(--brass);
+  animation: pulse-brass 2s infinite;
+}
+.status-light.error {
+  background: var(--rust);
+}
+
+@keyframes pulse-signal {
+  0% {
+    box-shadow: 0 0 0 0 rgba(47, 158, 110, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(47, 158, 110, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(47, 158, 110, 0);
+  }
+}
+@keyframes pulse-brass {
+  0% {
+    box-shadow: 0 0 0 0 rgba(216, 155, 60, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(216, 155, 60, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(216, 155, 60, 0);
+  }
+}
+
+/* Cards read like inspection/registration forms: paper surface, dashed
+   brass edge, brass rule along the top like an instrument bezel. */
+.panel-card {
+  background: var(--paper);
+  border: 1.5px dashed rgba(216, 155, 60, 0.55);
+  border-radius: 0.75rem;
+  position: relative;
+  overflow: hidden;
+}
+.panel-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: var(--brass);
+}
+
+/* Accessible keyboard focus */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   Motion
+   One consistent easing curve (a soft overshoot-free ease-out)
+   used everywhere something appears, so the app has a single
+   "feel" instead of a grab-bag of effects.
+   ============================================================ */
+
+/* Tab switches: whichever screen loses .hidden animates in. */
+@keyframes screen-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.tab-screen:not(.hidden) {
+  animation: screen-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Content injected after an action: registration confirmation,
+   check-in result panel. */
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.panel-in {
+  animation: panel-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Recent Activity rows, staggered via inline animation-delay in JS. */
+@keyframes item-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.item-in {
+  animation: item-in 0.3s ease-out both;
+}
+
+/* Tactile press feedback on primary buttons. */
+.btn-press {
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease;
+}
+.btn-press:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-screen:not(.hidden),
+  .panel-in,
+  .item-in,
+  .status-light.on,
+  .status-light.ready {
+    animation: none !important;
+  }
+  .btn-press:active {
+    transform: none;
   }
 }
