@@ -77,7 +77,7 @@ function showRegConfirmation(fullName) {
 }
 
 // ---------------------------------------------------------------
-// Quick Check-in (localStorage based, geofenced)
+// Quick Check-in / Sign-out (localStorage based, geofenced)
 // ---------------------------------------------------------------
 const checkinDeviceBox = document.getElementById("checkinDeviceBox");
 const checkinMessage = document.getElementById("checkinMessage");
@@ -91,7 +91,23 @@ function getStoredMember() {
   }
 }
 
-function renderCheckinBox() {
+function formatTime(iso) {
+  return new Date(iso).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function attachResetHandler() {
+  const btn = document.getElementById("notYouBtn");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    localStorage.removeItem(STORAGE_KEY);
+    renderCheckinBox();
+  });
+}
+
+async function renderCheckinBox() {
   const stored = getStoredMember();
   checkinMessage.textContent = "";
 
@@ -116,6 +132,38 @@ function renderCheckinBox() {
     return;
   }
 
+  checkinDeviceBox.innerHTML = `<p class="text-ink/40 text-sm font-mono">Loading status...</p>`;
+
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const { data: todayLogs, error } = await supabase
+    .from("attendance_logs")
+    .select("type, scanned_at")
+    .eq("member_id", stored.id)
+    .gte("scanned_at", startOfDay.toISOString())
+    .order("scanned_at", { ascending: false })
+    .limit(1);
+
+  if (error) {
+    console.error(error);
+  }
+
+  const latest = todayLogs && todayLogs[0];
+  const pastNoon = new Date().getHours() >= 12;
+
+  if (!latest) {
+    renderCheckInState(stored);
+  } else if (latest.type === "check_in" && !pastNoon) {
+    renderWaitingState(stored, latest.scanned_at);
+  } else if (latest.type === "check_in" && pastNoon) {
+    renderSignOutState(stored);
+  } else {
+    renderDoneState(stored, latest.scanned_at);
+  }
+}
+
+function renderCheckInState(stored) {
   checkinDeviceBox.innerHTML = `
     <div class="panel-in bg-navy text-paper rounded-lg py-8 px-4 sm:py-10 sm:px-6 mb-3 relative overflow-hidden">
       <div class="absolute top-0 left-0 right-0 h-1 bg-signal"></div>
@@ -134,14 +182,69 @@ function renderCheckinBox() {
       Not you? Reset this device
     </button>
   `;
-
   document
     .getElementById("checkInNowBtn")
     .addEventListener("click", handleCheckIn);
-  document.getElementById("notYouBtn").addEventListener("click", () => {
-    localStorage.removeItem(STORAGE_KEY);
-    renderCheckinBox();
-  });
+  attachResetHandler();
+}
+
+function renderWaitingState(stored, checkInTime) {
+  checkinDeviceBox.innerHTML = `
+    <div class="panel-in bg-navy text-paper rounded-lg py-8 px-4 sm:py-10 sm:px-6 mb-3 relative overflow-hidden">
+      <div class="absolute top-0 left-0 right-0 h-1 bg-brass"></div>
+      <div class="flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-widest text-brass mb-3">
+        <span class="status-light ready"></span> Checked In
+      </div>
+      <p class="font-display text-lg sm:text-xl font-bold mb-2">${escapeHtml(stored.full_name)}</p>
+      <p class="text-paper/60 text-sm">Checked in at ${formatTime(checkInTime)}. Sign-out opens at 12:00 PM.</p>
+    </div>
+    <button id="notYouBtn" class="text-xs font-mono text-ink/40 hover:text-ink/70 underline mt-1 transition-colors">
+      Not you? Reset this device
+    </button>
+  `;
+  attachResetHandler();
+}
+
+function renderSignOutState(stored) {
+  checkinDeviceBox.innerHTML = `
+    <div class="panel-in bg-navy text-paper rounded-lg py-8 px-4 sm:py-10 sm:px-6 mb-3 relative overflow-hidden">
+      <div class="absolute top-0 left-0 right-0 h-1 bg-brass"></div>
+      <div class="flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-widest text-brass mb-3">
+        <span class="status-light ready"></span> Checked In
+      </div>
+      <p class="font-display text-lg sm:text-xl font-bold mb-4">${escapeHtml(stored.full_name)}, ready to sign out?</p>
+      <button
+        id="signOutBtn"
+        class="btn-press w-full sm:w-auto bg-brass hover:bg-brass-dark text-navy font-display font-semibold uppercase tracking-wide py-3 px-8 rounded-lg transition text-sm"
+      >
+        Sign Out
+      </button>
+    </div>
+    <button id="notYouBtn" class="text-xs font-mono text-ink/40 hover:text-ink/70 underline mt-1 transition-colors">
+      Not you? Reset this device
+    </button>
+  `;
+  document
+    .getElementById("signOutBtn")
+    .addEventListener("click", handleSignOut);
+  attachResetHandler();
+}
+
+function renderDoneState(stored, signOutTime) {
+  checkinDeviceBox.innerHTML = `
+    <div class="panel-in bg-navy text-paper rounded-lg py-8 px-4 sm:py-10 sm:px-6 mb-3 relative overflow-hidden">
+      <div class="absolute top-0 left-0 right-0 h-1 bg-signal"></div>
+      <div class="flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-widest text-signal mb-3">
+        <span class="status-light on"></span> Complete
+      </div>
+      <p class="font-display text-lg sm:text-xl font-bold mb-2">${escapeHtml(stored.full_name)}</p>
+      <p class="text-paper/60 text-sm">Signed out at ${formatTime(signOutTime)}. See you tomorrow.</p>
+    </div>
+    <button id="notYouBtn" class="text-xs font-mono text-ink/40 hover:text-ink/70 underline mt-1 transition-colors">
+      Not you? Reset this device
+    </button>
+  `;
+  attachResetHandler();
 }
 
 function getCurrentPosition() {
@@ -188,16 +291,60 @@ async function handleCheckIn() {
     p_lng: position.coords.longitude,
   });
 
-  btn.disabled = false;
-  btn.textContent = "Check In Now";
-
   if (error) {
     console.error(error);
+    btn.disabled = false;
+    btn.textContent = "Check In Now";
     setCheckinMessage(error.message || "Failed to check in. Try again.", false);
     return;
   }
 
   setCheckinMessage(`Checked in: ${stored.full_name}`, true);
+  renderCheckinBox();
+  loadRecentActivity();
+}
+
+async function handleSignOut() {
+  const stored = getStoredMember();
+  if (!stored) return;
+
+  const btn = document.getElementById("signOutBtn");
+  btn.disabled = true;
+  btn.textContent = "Getting location...";
+
+  let position;
+  try {
+    position = await getCurrentPosition();
+  } catch (err) {
+    console.error(err);
+    btn.disabled = false;
+    btn.textContent = "Sign Out";
+    const msg =
+      err.code === err.PERMISSION_DENIED
+        ? "Location permission is required to sign out. Please allow it in your browser settings."
+        : "Couldn't get your location. Try again.";
+    setCheckinMessage(msg, false);
+    return;
+  }
+
+  btn.textContent = "Signing out...";
+
+  const { error } = await supabase.rpc("log_signout", {
+    p_member_id: stored.id,
+    p_lat: position.coords.latitude,
+    p_lng: position.coords.longitude,
+  });
+
+  if (error) {
+    console.error(error);
+    btn.disabled = false;
+    btn.textContent = "Sign Out";
+    setCheckinMessage(error.message || "Failed to sign out. Try again.", false);
+    return;
+  }
+
+  setCheckinMessage(`Signed out: ${stored.full_name}`, true);
+  renderCheckinBox();
   loadRecentActivity();
 }
 
@@ -230,15 +377,13 @@ async function loadRecentActivity() {
 
   list.innerHTML = data
     .map((row, i) => {
-      const time = new Date(row.scanned_at).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+      const time = formatTime(row.scanned_at);
+      const label = row.type === "check_out" ? "Signed out" : "Checked in";
       return `
         <div class="item-in bg-white/70 border border-ink/10 p-4 rounded-lg flex items-center justify-between gap-3" style="animation-delay: ${i * 60}ms">
           <div>
             <p class="font-medium text-ink text-sm">${escapeHtml(row.full_name)}</p>
-            <p class="text-xs text-ink/50 font-mono">${escapeHtml(row.unit || "—")}</p>
+            <p class="text-xs text-ink/50 font-mono">${label} • ${escapeHtml(row.unit || "—")}</p>
           </div>
           <p class="text-xs font-mono text-ink/40 shrink-0">${time}</p>
         </div>
