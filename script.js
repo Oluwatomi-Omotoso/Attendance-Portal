@@ -124,11 +124,30 @@ async function renderCheckinBox() {
         >
           Register Now
         </button>
+        <p class="text-ink/40 text-xs mt-5 mb-2 font-mono uppercase tracking-wide">Already registered elsewhere?</p>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <input
+            id="recoverPhone"
+            type="tel"
+            placeholder="Phone number used at registration"
+            class="flex-1 px-3 py-2.5 border border-ink/15 bg-white/70 rounded-lg text-sm focus:outline-none focus:border-brass"
+          />
+          <button
+            id="recoverBtn"
+            class="btn-press bg-navy hover:bg-navy-panel text-paper font-medium py-2.5 px-4 rounded-lg text-sm transition"
+          >
+            Find Me
+          </button>
+        </div>
+        <p id="recoverMessage" class="text-xs font-mono mt-2"></p>
       </div>
     `;
     document
       .getElementById("goRegisterBtn")
       .addEventListener("click", () => switchTab(1));
+    document
+      .getElementById("recoverBtn")
+      .addEventListener("click", handleRecover);
     return;
   }
 
@@ -224,9 +243,7 @@ function renderSignOutState(stored) {
       Not you? Reset this device
     </button>
   `;
-  document
-    .getElementById("signOutBtn")
-    .addEventListener("click", handleSignOut);
+  document.getElementById("signOutBtn").addEventListener("click", handleSignOut);
   attachResetHandler();
 }
 
@@ -245,6 +262,46 @@ function renderDoneState(stored, signOutTime) {
     </button>
   `;
   attachResetHandler();
+}
+
+async function handleRecover() {
+  const phoneInput = document.getElementById("recoverPhone");
+  const msg = document.getElementById("recoverMessage");
+  const phone = phoneInput.value.trim();
+
+  if (!phone) {
+    msg.textContent = "Enter the phone number you registered with.";
+    msg.className = "text-xs font-mono mt-2 text-rust";
+    return;
+  }
+
+  const btn = document.getElementById("recoverBtn");
+  btn.disabled = true;
+  btn.textContent = "Searching...";
+
+  const { data, error } = await supabase
+    .from("members")
+    .select("id, full_name")
+    .eq("phone", phone)
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  btn.disabled = false;
+  btn.textContent = "Find Me";
+
+  if (error || !data || data.length === 0) {
+    console.error(error);
+    msg.textContent = "No matching registration found. Check the number or register fresh.";
+    msg.className = "text-xs font-mono mt-2 text-rust";
+    return;
+  }
+
+  const member = data[0];
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({ id: member.id, full_name: member.full_name }),
+  );
+  renderCheckinBox();
 }
 
 function getCurrentPosition() {
