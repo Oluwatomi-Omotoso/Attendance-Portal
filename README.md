@@ -41,9 +41,13 @@ This instead treats the device itself as the credential. Register once on your o
 **Tech stack**
 
 Frontend: Vanilla HTML/CSS/JS +Tailwind (CDN)
+
 Backend: Supabase(Postgres + PosgREST +RPC)
+
 Auth: None, its device scoped via local storage, no user accounts.
+
 Geolocation: Browser geolocation API + Haversine distance calculation handled in Postgres.
+
 Fonts: Space Grotesk(display), IBM Plex Sans (body), IBM Plex Mono (data/status)
 
 There's no build setup, no bundler just 4 static files that can be hosted anywhere with HTTPS
