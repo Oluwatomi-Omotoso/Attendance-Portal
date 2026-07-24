@@ -52,7 +52,9 @@ Fonts: Space Grotesk(display), IBM Plex Sans (body), IBM Plex Mono (data/status)
 
 There's no build setup, no bundler just 4 static files that can be hosted anywhere with HTTPS
 
-How it works:
+---
+
+**How it works**
 
 _Registration_
 
