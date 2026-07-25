@@ -4,6 +4,8 @@ This is a geofenced, device-based attendance system built for the internal ICT t
 
 No app install, no shared kiosk. Every person's own phone or laptop remembers them.
 
+live link: https://oluwatomi-omotoso.github.io/Attendance-Portal/
+
 ---
 
 **The problem**
